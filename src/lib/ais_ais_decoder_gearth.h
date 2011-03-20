@@ -23,7 +23,7 @@
 #define INCLUDED_HOWTO_ais_decoder_gearth_H
 
 #include <gr_sync_block.h>
-#include <omnithread.h>
+#include <gruel/thread.h>
 #include <gr_msg_queue.h>
 #include <vector>
 #include <sys/types.h>

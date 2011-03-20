@@ -50,7 +50,6 @@ GR_SCRIPTING
 dnl Checks for libraries.
 
 dnl check for threads (mandatory)
-GR_OMNITHREAD
 
 CFLAGS="${CFLAGS} $PTHREAD_CFLAGS"
 CXXFLAGS="${CXXFLAGS} $PTHREAD_CFLAGS"

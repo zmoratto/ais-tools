@@ -23,7 +23,7 @@
 #define INCLUDED_HOWTO_ais_source_f_H
 
 #include <gr_sync_block.h>
-#include <omnithread.h>
+#include <gruel/thread.h>
 
 class ais_ais_source_f;
 
@@ -79,7 +79,7 @@ private:
   int d_antallenner;
   unsigned char d_crc[16];
   int ANTALLFOR;
-  omni_mutex d_mutex;
+  gruel::mutex d_mutex;
 
   int d_nstart, d_npreamble, d_nstartsign,  d_ncrc, d_nstopsign, d_nslutt;
   unsigned int d_ndata;

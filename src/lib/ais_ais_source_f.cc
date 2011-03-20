@@ -132,8 +132,7 @@ void ais_ais_source_f::nypakke (const std::vector<char> &data)
 
 void ais_ais_source_f::restart ()
 {
-  omni_mutex_lock       l(d_mutex);
-
+  gruel::scoped_lock l(d_mutex);
   d_state = ST_START;
   d_ndata = 0;
   d_nstart = 0;
@@ -155,8 +154,7 @@ ais_ais_source_f::work (int noutput_items,
                         gr_vector_void_star &output_items)
 {
   float *out = (float *) output_items[0];
-
-  omni_mutex_lock       l(d_mutex);
+  gruel::scoped_lock l(d_mutex);
   unsigned int size = d_data.size();
   unsigned n  = 0;
   int bitstuffed = 0;
