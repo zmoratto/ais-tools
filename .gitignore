@@ -2,8 +2,29 @@ Makefile.in
 aclocal.m4
 config.guess
 config.h.in
+config.h
+config.log
+config.status
+libtool
 config.sub
 autom4te.cache
 configure
 ltmain.sh
 *loT
+*lo
+*.o
+stamp-h1
+Makefile
+.deps
+.libs
+*.la
+
+# SWiG generated files
+src/lib/ais.cc
+src/lib/ais.py
+
+# Executables
+src/aisdecodefromfile
+src/aisgearthserver
+src/aisspecific
+src/python/run_tests
