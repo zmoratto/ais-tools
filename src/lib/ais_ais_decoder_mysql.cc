@@ -1,19 +1,19 @@
 /* -*- c++ -*- */
 /*
  * Copyright 2004 Free Software Foundation, Inc.
- * 
+ *
  * This file is part of GNU Radio
- * 
+ *
  * GNU Radio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2, or (at your option)
  * any later version.
- * 
+ *
  * GNU Radio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with GNU Radio; see the file COPYING.  If not, write to
  * the Free Software Foundation, Inc., 51 Franklin Street,
@@ -28,7 +28,7 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#define DBG(x) 
+#define DBG(x)
 #include <ais_ais_decoder_mysql.h>
 #include <gr_io_signature.h>
 /*
@@ -38,8 +38,8 @@
  */
 
 
-ais_ais_decoder_mysql_sptr 
-ais_make_ais_decoder_mysql (const char *host,const char *database, const char *user, const char *password)			// This is needed for python to access this class
+ais_ais_decoder_mysql_sptr
+ais_make_ais_decoder_mysql (const char *host,const char *database, const char *user, const char *password)                      // This is needed for python to access this class
 {
   return ais_ais_decoder_mysql_sptr (new ais_ais_decoder_mysql (host,database,user,password));
 }
@@ -50,219 +50,219 @@ ais_make_ais_decoder_mysql (const char *host,const char *database, const char *u
  */
 ais_ais_decoder_mysql::ais_ais_decoder_mysql (const char *host,const char *database, const char *user, const char *password)
   : gr_sync_block ("ais_decoder_mysql",
-		   gr_make_io_signature (1,1, sizeof(char)),	// Number of minimum input ports, maximum output ports and size of each element (char = 1byte)
-		   gr_make_io_signature (0,0,0))
-		 		// Initializing class members   d_x for horizontal position and d_y for vertical position
+                   gr_make_io_signature (1,1, sizeof(char)),    // Number of minimum input ports, maximum output ports and size of each element (char = 1byte)
+                   gr_make_io_signature (0,0,0))
+    // Initializing class members   d_x for horizontal position and d_y for vertical position
 {
-//	set_output_multiple(8);
-	d_receivedframes = 0;
-	d_lostframes = 0;
-	d_lostframes2 = 0;
-	restart();
-		if(!mysql_init(&d_conn))
-		{
-			throw std::runtime_error("Couldn't initialize mysql\n");
-		}
-		if (!mysql_real_connect(&d_conn,host,user,password, database, 0, NULL, 0))
-		{
-			throw std::runtime_error("Couldn't connect to mysql server\n");
-		}
+  //    set_output_multiple(8);
+  d_receivedframes = 0;
+  d_lostframes = 0;
+  d_lostframes2 = 0;
+  restart();
+  if(!mysql_init(&d_conn))
+    {
+      throw std::runtime_error("Couldn't initialize mysql\n");
+    }
+  if (!mysql_real_connect(&d_conn,host,user,password, database, 0, NULL, 0))
+    {
+      throw std::runtime_error("Couldn't connect to mysql server\n");
+    }
 }
 
 
 unsigned short ais_ais_decoder_mysql::sdlc_crc(unsigned char *data, unsigned len) // Calculates CRC-checksum
 {
-	unsigned short c, crc=0xffff;
+  unsigned short c, crc=0xffff;
 
-	while(len--)
-		for(c = 0x100 + *data++; c> 1 ; c >>=1)
-			if((crc ^ c) & 1)
-				crc=(crc>>1)^0x8408;
-			else
-				crc>>=1;
-	return ~crc;
+  while(len--)
+    for(c = 0x100 + *data++; c> 1 ; c >>=1)
+      if((crc ^ c) & 1)
+        crc=(crc>>1)^0x8408;
+      else
+        crc>>=1;
+  return ~crc;
 
 }
 
-bool ais_ais_decoder_mysql::calculate_crc(int lengde)          
+bool ais_ais_decoder_mysql::calculate_crc(int lengde)
 {
-	int antallbytes = lengde / 8;
-	unsigned char *data = (unsigned char*) malloc(sizeof(unsigned char)*(antallbytes+2));
-	if (data == NULL)
-	{
-		throw std::runtime_error("Error allocating memory\n");
-	}
-	int i,j;
+  int antallbytes = lengde / 8;
+  unsigned char *data = (unsigned char*) malloc(sizeof(unsigned char)*(antallbytes+2));
+  if (data == NULL)
+    {
+      throw std::runtime_error("Error allocating memory\n");
+    }
+  int i,j;
 
-	unsigned char tmp;
+  unsigned char tmp;
 
-	for(j=0;j<antallbytes + 2;j++)
-	{
-		tmp = 0;
-		for(i=0;i<8;i++)
-			tmp |= (((d_buffer[i+8*j]) << (i)));
-		data[j] = tmp;
-	}
-	unsigned short crc = sdlc_crc(data,antallbytes+2);
-	DBG(printf("CRC: %04x\n",crc);)
-	memset(d_rbuffer,0,250*sizeof(char));
-	for(j=0;j<antallbytes;j++)
-	{
-		for(i=0;i<8;i++)
-			d_rbuffer[j*8+i] = (data[j] >> (7-i)) &1;
-	}
-	free(data);
-	return (crc == 0x0f47);
+  for(j=0;j<antallbytes + 2;j++)
+    {
+      tmp = 0;
+      for(i=0;i<8;i++)
+        tmp |= (((d_buffer[i+8*j]) << (i)));
+      data[j] = tmp;
+    }
+  unsigned short crc = sdlc_crc(data,antallbytes+2);
+  DBG(printf("CRC: %04x\n",crc);)
+    memset(d_rbuffer,0,250*sizeof(char));
+  for(j=0;j<antallbytes;j++)
+    {
+      for(i=0;i<8;i++)
+        d_rbuffer[j*8+i] = (data[j] >> (7-i)) &1;
+    }
+  free(data);
+  return (crc == 0x0f47);
 }
 
 unsigned long ais_ais_decoder_mysql::henten(int from, int size, unsigned char *frame)
 {
-	int i=0;
-	unsigned long tmp = 0;
-	for(i=0;i<size;i++)
-	{
-		tmp |= (frame[from+i]) << (size-1-i);
-	}
-	return tmp;
+  int i=0;
+  unsigned long tmp = 0;
+  for(i=0;i<size;i++)
+    {
+      tmp |= (frame[from+i]) << (size-1-i);
+    }
+  return tmp;
 
 }
 
 
 void ais_ais_decoder_mysql::bokstavtabell(char bokstav, char* name, int pos)
 {
-	name[pos] = bokstav + 64;
-	if (name[pos] == 64 || name[pos] == 96) name[pos] = ' ';
+  name[pos] = bokstav + 64;
+  if (name[pos] == 64 || name[pos] == 96) name[pos] = ' ';
 
 }
 
-void ais_ais_decoder_mysql::get_data (int bufferlengde)    // Picks out interesting data from the bits and sends to MySQL-database 
+void ais_ais_decoder_mysql::get_data (int bufferlengde)    // Picks out interesting data from the bits and sends to MySQL-database
 {
-	std::ostringstream sqlquery;
-//	printf("__________\n");
-	unsigned char type = henten(0,6,d_rbuffer);
-	//printf("MessageID: %d\n",type);
-	unsigned long mmsi = henten(8,30,d_rbuffer);
-	//printf("MMSI: %09d\n",mmsi);
-	unsigned long day,hour, minute, second,year,month;
-	int longitude,latitude;
-	unsigned short coarse, heading, sog;
-	char name[21];
-	char destination[21];
-	char rateofturn, underway;
-	unsigned int A,B;
-	unsigned char C,D;
-	unsigned char height;
-	for(int m=0;m<bufferlengde;m++)
-	{
-		d_tbuffer[m] = d_rbuffer[m] + 0x30;
-	}
-	d_tbuffer[bufferlengde] = 0;
+  std::ostringstream sqlquery;
+  //    printf("__________\n");
+  unsigned char type = henten(0,6,d_rbuffer);
+  //printf("MessageID: %d\n",type);
+  unsigned long mmsi = henten(8,30,d_rbuffer);
+  //printf("MMSI: %09d\n",mmsi);
+  unsigned long day,hour, minute, second,year,month;
+  int longitude,latitude;
+  unsigned short coarse, heading, sog;
+  char name[21];
+  char destination[21];
+  char rateofturn, underway;
+  unsigned int A,B;
+  unsigned char C,D;
+  unsigned char height;
+  for(int m=0;m<bufferlengde;m++)
+    {
+      d_tbuffer[m] = d_rbuffer[m] + 0x30;
+    }
+  d_tbuffer[bufferlengde] = 0;
 
-	//time_t tid;
-	int k, hvor, letter;
-	MYSQL_RES *res;
-	//int tid = 0;
-	time_t tid;
-	time(&tid);
-switch(type){
-    case 1:
-    case 2:
-    case 3:
-	    longitude = henten(61,28,d_rbuffer);
-		if(((longitude >> 27)&1)==1)
-		longitude |= 0xF0000000;
-	    latitude = henten(38+22+29,27,d_rbuffer);
-	    if(((latitude >> 26)&1)==1)
-		    latitude |= 0xf8000000;
-	    coarse = henten(38+22+28+28,12,d_rbuffer);
-	    sog = henten(50,10,d_rbuffer);
-	    rateofturn = henten(38+2,8,d_rbuffer);
-	    underway = henten(38,2,d_rbuffer);
-	    heading = henten(38+22+28+28+12,9,d_rbuffer);
+  //time_t tid;
+  int k, hvor, letter;
+  MYSQL_RES *res;
+  //int tid = 0;
+  time_t tid;
+  time(&tid);
+  switch(type){
+  case 1:
+  case 2:
+  case 3:
+    longitude = henten(61,28,d_rbuffer);
+    if(((longitude >> 27)&1)==1)
+      longitude |= 0xF0000000;
+    latitude = henten(38+22+29,27,d_rbuffer);
+    if(((latitude >> 26)&1)==1)
+      latitude |= 0xf8000000;
+    coarse = henten(38+22+28+28,12,d_rbuffer);
+    sog = henten(50,10,d_rbuffer);
+    rateofturn = henten(38+2,8,d_rbuffer);
+    underway = henten(38,2,d_rbuffer);
+    heading = henten(38+22+28+28+12,9,d_rbuffer);
 
-	   printf("%d:  %09d %10f %10f %5f %5f %5i %5d %5d\n",(int)type,(int)mmsi,(float)latitude/600000,(float)longitude/600000,(float)coarse/10,(float)sog/10,(int)rateofturn,(int)underway,(int)heading);
-		
-	sqlquery << "insert into ais_position (time,mmsi,latitude,longitude,heading,coarse,speed) values ("<<(int)tid<<","<<mmsi<<","<< std::setprecision(9) << (float)latitude/600000 << "," << std::setprecision(9) <<  (float)longitude/600000 << "," << std::setprecision(7) << (float)heading << ","<<(float)coarse/10<<"," << (float)sog/10 << ")";
+    printf("%d:  %09d %10f %10f %5f %5f %5i %5d %5d\n",(int)type,(int)mmsi,(float)latitude/600000,(float)longitude/600000,(float)coarse/10,(float)sog/10,(int)rateofturn,(int)underway,(int)heading);
 
-       break;
-    case 4:
-	    year = henten(40,12,d_rbuffer);
-	    month = henten(52,4,d_rbuffer);
-	    day = henten(56,5,d_rbuffer);
-	    hour = henten(61,5,d_rbuffer);
-	    minute = henten(66,6,d_rbuffer);
-	    second = henten(72,6,d_rbuffer);
-	    longitude = henten(79,28,d_rbuffer);
-		if(((longitude >> 27)&1)==1)
-		longitude |= 0xF0000000;
-	    latitude = henten(107,27,d_rbuffer);
-	    if(((latitude >> 26)&1)==1)
-		    latitude |= 0xf8000000;
+    sqlquery << "insert into ais_position (time,mmsi,latitude,longitude,heading,coarse,speed) values ("<<(int)tid<<","<<mmsi<<","<< std::setprecision(9) << (float)latitude/600000 << "," << std::setprecision(9) <<  (float)longitude/600000 << "," << std::setprecision(7) << (float)heading << ","<<(float)coarse/10<<"," << (float)sog/10 << ")";
+
+    break;
+  case 4:
+    year = henten(40,12,d_rbuffer);
+    month = henten(52,4,d_rbuffer);
+    day = henten(56,5,d_rbuffer);
+    hour = henten(61,5,d_rbuffer);
+    minute = henten(66,6,d_rbuffer);
+    second = henten(72,6,d_rbuffer);
+    longitude = henten(79,28,d_rbuffer);
+    if(((longitude >> 27)&1)==1)
+      longitude |= 0xF0000000;
+    latitude = henten(107,27,d_rbuffer);
+    if(((latitude >> 26)&1)==1)
+      latitude |= 0xf8000000;
 
     printf("%d:  %09d %d %d %d %d %d %d %f %f\n",(int)type,(int)mmsi,(int)year,(int)month,(int)day,(int)hour,(int)minute,(int)second,(float)latitude/600000,(float)longitude/600000);
 
-	sqlquery << "insert into ais_basestation (time,mmsi,longitude,latitude) values ("<< (int)tid << "," << mmsi << ","<<std::setprecision(9)<<(float)longitude/600000<< ","<<std::setprecision(9)<<(float)latitude/600000<<")";
+    sqlquery << "insert into ais_basestation (time,mmsi,longitude,latitude) values ("<< (int)tid << "," << mmsi << ","<<std::setprecision(9)<<(float)longitude/600000<< ","<<std::setprecision(9)<<(float)latitude/600000<<")";
 
-    	break;
-    case 5:
-	hvor = 112;
-	for(k=0;k<20;k++)
-	{
-		letter = henten(hvor,6,d_rbuffer);
-		bokstavtabell(letter,name,k);
-		hvor += 6;
-	}
-	name[20] = 0;
-//	printf("Name: %s\n", name);
-	hvor = 120+106+68+8;
-	for(k=0;k<20;k++)
-	{
-		letter = henten(hvor,6,d_rbuffer);
-		bokstavtabell(letter,destination,k);
-		hvor += 6;
-	}
-	destination[20] = 0;
-//	printf("Destination: %s\n",destination);
-	A = henten(240,9,d_rbuffer);
-	B = henten(240+9,9,d_rbuffer);
-	C = henten(240+9+9,6,d_rbuffer);
-	D = henten(240+9+9+6,6,d_rbuffer);
-	height = henten(294,8,d_rbuffer);
-//	printf("Length: %d\nWidth: %d\nHeight: %f\n",A+B,C+D,(float)height/10);
-	printf("%d:  %09d %s %s %d %d %f\n",type,mmsi,name,destination,A+B,C+D,(float)height/10);
+    break;
+  case 5:
+    hvor = 112;
+    for(k=0;k<20;k++)
+      {
+        letter = henten(hvor,6,d_rbuffer);
+        bokstavtabell(letter,name,k);
+        hvor += 6;
+      }
+    name[20] = 0;
+    //  printf("Name: %s\n", name);
+    hvor = 120+106+68+8;
+    for(k=0;k<20;k++)
+      {
+        letter = henten(hvor,6,d_rbuffer);
+        bokstavtabell(letter,destination,k);
+        hvor += 6;
+      }
+    destination[20] = 0;
+    //  printf("Destination: %s\n",destination);
+    A = henten(240,9,d_rbuffer);
+    B = henten(240+9,9,d_rbuffer);
+    C = henten(240+9+9,6,d_rbuffer);
+    D = henten(240+9+9+6,6,d_rbuffer);
+    height = henten(294,8,d_rbuffer);
+    //  printf("Length: %d\nWidth: %d\nHeight: %f\n",A+B,C+D,(float)height/10);
+    printf("%d:  %09d %s %s %d %d %f\n",type,mmsi,name,destination,A+B,C+D,(float)height/10);
 
-	sqlquery << "insert into ais_vesseldata (time,mmsi,name,destination,height,A,B,C,D) values ("<<(int)tid<< ","<<mmsi<<",\""<<name<<"\",\""<<destination<<"\","<<(float)height/10<<","<<(int)A<<","<<(int)B<<","<<(int)C<<","<<(int)D<<")";
+    sqlquery << "insert into ais_vesseldata (time,mmsi,name,destination,height,A,B,C,D) values ("<<(int)tid<< ","<<mmsi<<",\""<<name<<"\",\""<<destination<<"\","<<(float)height/10<<","<<(int)A<<","<<(int)B<<","<<(int)C<<","<<(int)D<<")";
 
 
-	break;
-    default:
-	return;
-	break;
+    break;
+  default:
+    return;
+    break;
 
-}
-	//std::cout << sqlquery.str() << "\n";
-	if (mysql_query(&d_conn, sqlquery.str().c_str()))
-	{
-		throw std::runtime_error("Couldn't do query\n");
-	}	
-	res = mysql_use_result(&d_conn);
-	mysql_free_result(res);
+  }
+  //std::cout << sqlquery.str() << "\n";
+  if (mysql_query(&d_conn, sqlquery.str().c_str()))
+    {
+      throw std::runtime_error("Couldn't do query\n");
+    }
+  res = mysql_use_result(&d_conn);
+  mysql_free_result(res);
 }
 
 
 int ais_ais_decoder_mysql::received ()  // Returns number of successfully received frames
 {
-	return d_receivedframes;
+  return d_receivedframes;
 }
 
 int ais_ais_decoder_mysql::lost()     // Returns number of frames with wrong checksum
 {
-	return d_lostframes;
+  return d_lostframes;
 }
 
 int ais_ais_decoder_mysql::lost2()   // Returns number of frames with wrong start symbol or stop symbol
 {
-	return d_lostframes2;
+  return d_lostframes2;
 }
 void ais_ais_decoder_mysql::restart ()      // Called every time a frame has been finished received
 {
@@ -278,189 +278,189 @@ void ais_ais_decoder_mysql::restart ()      // Called every time a frame has bee
   d_last = 0;
   d_bitstuff = false;
   d_bufferpos = 0;
-	DBG(printf("Resets\n");)
-}
+  DBG(printf("Resets\n");)
+    }
 
 ais_ais_decoder_mysql::~ais_ais_decoder_mysql ()
 {
-	mysql_close(&d_conn);
+  mysql_close(&d_conn);
 }
 
-int 
+int
 ais_ais_decoder_mysql::work (int noutput_items,
-			gr_vector_const_void_star &input_items,
-			gr_vector_void_star &output_items)
+                             gr_vector_const_void_star &input_items,
+                             gr_vector_void_star &output_items)
 {
   const char *in = (char *) input_items[0];
-	//enum state_t { ST_SKURR, ST_PREAMBLE, ST_STARTSIGN, ST_DATA, ST_STOPSIGN};
-	//int d_nskurr, d_npreamble, d_nstartsign, d_ndata,  d_nstopsign;
+  //enum state_t { ST_SKURR, ST_PREAMBLE, ST_STARTSIGN, ST_DATA, ST_STOPSIGN};
+  //int d_nskurr, d_npreamble, d_nstartsign, d_ndata,  d_nstopsign;
   int i = 0;
   while (i < noutput_items){
-  switch(d_state)
-  {
-	case ST_DATA:
-			if (d_bitstuff)
-			{
-				if(in[i] == 1)
-				{	
-					d_state = ST_STOPSIGN;
-					d_ndata = 0;
-					DBG(printf("%d",in[i]);)
-					d_bitstuff = false;
-					
-				}
-				else
-				{
-					d_ndata++;
-					d_last = in[i];
-					d_bitstuff = false;
-				}	
-			}
-			else  {
-				if(in[i] == d_last && in[i] == 1)
-				{	d_antallenner++;
-					if(d_antallenner == 4)
-					{	d_bitstuff = true;	
-						d_antallenner = 0;
-					}
+    switch(d_state)
+      {
+      case ST_DATA:
+        if (d_bitstuff)
+          {
+            if(in[i] == 1)
+              {
+                d_state = ST_STOPSIGN;
+                d_ndata = 0;
+                DBG(printf("%d",in[i]);)
+                  d_bitstuff = false;
 
-				}
-				else
-					d_antallenner = 0;
-				
-				DBG(printf("%d",in[i]);)
-				d_buffer[d_bufferpos] = in[i]; 
-				d_bufferpos++;
-				d_ndata++;
-				if (d_bufferpos >= 449) {
-					restart();
-				}
-			}
-		break;
-	
-	case ST_SKURR:                // The state when no reasonable input is coming
-			if (in[i] != d_last)
-				d_antallpreamble++;
-			else
-				d_antallpreamble = 0;
-			d_last = in[i];
-			if (d_antallpreamble > 14 && in[i] == 0)
-			{
-				d_state = ST_PREAMBLE;
-			        d_nskurr = 0;	
-				d_antallpreamble = 0;
-				DBG(printf("Preamble\n");)
-			}
-			d_nskurr++;
-		break;
+              }
+            else
+              {
+                d_ndata++;
+                d_last = in[i];
+                d_bitstuff = false;
+              }
+          }
+        else  {
+          if(in[i] == d_last && in[i] == 1)
+            {   d_antallenner++;
+              if(d_antallenner == 4)
+                {       d_bitstuff = true;
+                  d_antallenner = 0;
+                }
 
-	case ST_PREAMBLE:             // Switches to this state when preamble has been discovered
-			DBG(printf("..%d..",in[i]);)
-			if (in[i] != d_last && d_nstartsign == 0)
-				d_antallpreamble++;
-			else
-			{
-				if(in[i] == 1)    //To ettal har kommet etter hverandre 
-				{
-					if(d_nstartsign == 0){    // Forste gang det skjer
-						d_nstartsign = 3;
-						d_last = in[i];
-					}
-					else if (d_nstartsign == 5)   // Har oppdaget start av startsymbol
-					{
-						d_nstartsign++;
-						d_npreamble = 0;
-						d_antallpreamble = 0;
-						d_state = ST_STARTSIGN;
-					}
-					else{
-						d_nstartsign++;
-					}
-						
-				}
-				else   //To nuller har kommet etter hverandre
-				{
-					if(d_nstartsign == 0)
-					{	d_nstartsign =1;
-						
-					}	
-					else
-					{
-						restart();
-					}
-				}
-			}
-			d_npreamble++;
-		break;
-	
-	case ST_STARTSIGN:                 
-			//printf("..%d..",in[i]);
-			//printf("Startsign: %d\n",d_nstartsign);
-			if(d_nstartsign >=7)
-			{
-				if (in[i] == 0)
-				{
-					DBG(printf("\nData:\n");)
-					d_state = ST_DATA;
-					d_nstartsign = 0;
-					d_antallenner = 0;
-					memset(d_buffer,0,250*sizeof(char));
-					d_bufferpos = 0;
-				}
-				else {
-					restart();
-				}
-				
-			}
-			else if (in[i] == 0)
-			{
-				restart();
-			}
-			d_nstartsign++;
-		break;
-	
-	case ST_STOPSIGN:
-		int bufferlengde = d_bufferpos - 6 -16;
-		if(in[i] == 0)
-		{
-			DBG(printf("%d\n\nFrame received OK.  %d bits\n",in[i],bufferlengde);)
-			bool correct = calculate_crc(bufferlengde);
-			if(correct)
-			{
-				DBG(printf("CRC Checksum correct! Frame Successfully Received!!!\n");)
-				d_receivedframes++;
-				d_tbuffer = (char*) malloc((bufferlengde+1)*sizeof(char));
-				if (d_tbuffer == NULL)
-				{
-					throw std::runtime_error("Error allocating memory\n");
-				}
-				get_data(bufferlengde);
-				free(d_tbuffer);
-		/*		printf("\n<--");
-				for(int l=0;l<bufferlengde;l++)
-				{
-					printf("%c",d_rbuffer[l]+0x30);
-				}
-				printf("-->\n");*/
-			}
-			else{
-				DBG(printf("CRC Checksum FALSE!!!\n");)
-				d_lostframes++;
-			}
-			DBG(printf("_________________________________________________________\n\n");)
-			
-		}
-		else{
-			DBG(printf("\n\nERROR in Frame\n__________________________________________________________\n\n");)
-			d_lostframes2++;
-		}
-		restart();
-		break;
+            }
+          else
+            d_antallenner = 0;
+
+          DBG(printf("%d",in[i]);)
+            d_buffer[d_bufferpos] = in[i];
+          d_bufferpos++;
+          d_ndata++;
+          if (d_bufferpos >= 449) {
+            restart();
+          }
+        }
+        break;
+
+      case ST_SKURR:                // The state when no reasonable input is coming
+        if (in[i] != d_last)
+          d_antallpreamble++;
+        else
+          d_antallpreamble = 0;
+        d_last = in[i];
+        if (d_antallpreamble > 14 && in[i] == 0)
+          {
+            d_state = ST_PREAMBLE;
+            d_nskurr = 0;
+            d_antallpreamble = 0;
+            DBG(printf("Preamble\n");)
+              }
+        d_nskurr++;
+        break;
+
+      case ST_PREAMBLE:             // Switches to this state when preamble has been discovered
+        DBG(printf("..%d..",in[i]);)
+          if (in[i] != d_last && d_nstartsign == 0)
+            d_antallpreamble++;
+          else
+            {
+              if(in[i] == 1)    //To ettal har kommet etter hverandre
+                {
+                  if(d_nstartsign == 0){    // Forste gang det skjer
+                    d_nstartsign = 3;
+                    d_last = in[i];
+                  }
+                  else if (d_nstartsign == 5)   // Har oppdaget start av startsymbol
+                    {
+                      d_nstartsign++;
+                      d_npreamble = 0;
+                      d_antallpreamble = 0;
+                      d_state = ST_STARTSIGN;
+                    }
+                  else{
+                    d_nstartsign++;
+                  }
+
+                }
+              else   //To nuller har kommet etter hverandre
+                {
+                  if(d_nstartsign == 0)
+                    {   d_nstartsign =1;
+
+                    }
+                  else
+                    {
+                      restart();
+                    }
+                }
+            }
+        d_npreamble++;
+        break;
+
+      case ST_STARTSIGN:
+        //printf("..%d..",in[i]);
+        //printf("Startsign: %d\n",d_nstartsign);
+        if(d_nstartsign >=7)
+          {
+            if (in[i] == 0)
+              {
+                DBG(printf("\nData:\n");)
+                  d_state = ST_DATA;
+                d_nstartsign = 0;
+                d_antallenner = 0;
+                memset(d_buffer,0,250*sizeof(char));
+                d_bufferpos = 0;
+              }
+            else {
+              restart();
+            }
+
+          }
+        else if (in[i] == 0)
+          {
+            restart();
+          }
+        d_nstartsign++;
+        break;
+
+      case ST_STOPSIGN:
+        int bufferlengde = d_bufferpos - 6 -16;
+        if(in[i] == 0)
+          {
+            DBG(printf("%d\n\nFrame received OK.  %d bits\n",in[i],bufferlengde);)
+              bool correct = calculate_crc(bufferlengde);
+            if(correct)
+              {
+                DBG(printf("CRC Checksum correct! Frame Successfully Received!!!\n");)
+                  d_receivedframes++;
+                d_tbuffer = (char*) malloc((bufferlengde+1)*sizeof(char));
+                if (d_tbuffer == NULL)
+                  {
+                    throw std::runtime_error("Error allocating memory\n");
+                  }
+                get_data(bufferlengde);
+                free(d_tbuffer);
+                /*              printf("\n<--");
+                                for(int l=0;l<bufferlengde;l++)
+                                {
+                                printf("%c",d_rbuffer[l]+0x30);
+                                }
+                                printf("-->\n");*/
+              }
+            else{
+              DBG(printf("CRC Checksum FALSE!!!\n");)
+                d_lostframes++;
+            }
+            DBG(printf("_________________________________________________________\n\n");)
+
+              }
+        else{
+          DBG(printf("\n\nERROR in Frame\n__________________________________________________________\n\n");)
+            d_lostframes2++;
+        }
+        restart();
+        break;
 
 
-  }
-			d_last = in[i];
-  			i++;
+      }
+    d_last = in[i];
+    i++;
   }
 
 

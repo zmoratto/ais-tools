@@ -1,19 +1,19 @@
 /* -*- c++ -*- */
 /*
  * Copyright 2004 Free Software Foundation, Inc.
- * 
+ *
  * This file is part of GNU Radio
- * 
+ *
  * GNU Radio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2, or (at your option)
  * any later version.
- * 
+ *
  * GNU Radio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with GNU Radio; see the file COPYING.  If not, write to
  * the Free Software Foundation, Inc., 51 Franklin Street,
@@ -36,7 +36,7 @@
  * Create a new instance of ais_invert10_bb and return
  * a boost shared_ptr.  This is effectively the public constructor.
  */
-ais_invert10_bb_sptr 
+ais_invert10_bb_sptr
 ais_make_invert10_bb ()
 {
   return ais_invert10_bb_sptr (new ais_invert10_bb ());
@@ -51,18 +51,18 @@ ais_make_invert10_bb ()
  * are connected to this block.  In this case, we accept
  * only 1 input and 1 output.
  */
-static const int MIN_IN = 1;	// mininum number of input streams
-static const int MAX_IN = 1;	// maximum number of input streams
-static const int MIN_OUT = 1;	// minimum number of output streams
-static const int MAX_OUT = 1;	// maximum number of output streams
+static const int MIN_IN = 1;    // mininum number of input streams
+static const int MAX_IN = 1;    // maximum number of input streams
+static const int MIN_OUT = 1;   // minimum number of output streams
+static const int MAX_OUT = 1;   // maximum number of output streams
 
 /*
  * The private constructor
  */
 ais_invert10_bb::ais_invert10_bb ()
   : gr_sync_block ("invert10_bb",
-		   gr_make_io_signature (MIN_IN, MAX_IN, sizeof (char)),
-		   gr_make_io_signature (MIN_OUT, MAX_OUT, sizeof (char)))
+                   gr_make_io_signature (MIN_IN, MAX_IN, sizeof (char)),
+                   gr_make_io_signature (MIN_OUT, MAX_OUT, sizeof (char)))
 {
   // nothing else required in this example
 }
@@ -75,18 +75,18 @@ ais_invert10_bb::~ais_invert10_bb ()
   // nothing else required in this example
 }
 
-int 
+int
 ais_invert10_bb::work (int noutput_items,
-			gr_vector_const_void_star &input_items,
-			gr_vector_void_star &output_items)
+                       gr_vector_const_void_star &input_items,
+                       gr_vector_void_star &output_items)
 {
   const char *in = (const char *) input_items[0];
   char *out = (char *) output_items[0];
 
   for (int i = 0; i < noutput_items; i++){
-	  if (in[i] == 1) out[i] = 0;
-	  else if (in[i] == 0) out[i] = 1;
-	  else out[i] = 0;
+    if (in[i] == 1) out[i] = 0;
+    else if (in[i] == 0) out[i] = 1;
+    else out[i] = 0;
   }
 
   // Tell runtime system how many output items we produced.

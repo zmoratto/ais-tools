@@ -1,19 +1,19 @@
 /* -*- c++ -*- */
 /*
  * Copyright 2004 Free Software Foundation, Inc.
- * 
+ *
  * This file is part of GNU Radio
- * 
+ *
  * GNU Radio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2, or (at your option)
  * any later version.
- * 
+ *
  * GNU Radio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with GNU Radio; see the file COPYING.  If not, write to
  * the Free Software Foundation, Inc., 51 Franklin Street,
@@ -78,59 +78,59 @@ private:
   friend void* threaden(void*arg);
   friend void* serveren(void*arg);
 
-  ais_ais_decoder_gearth (int port);  	// private constructor
+  ais_ais_decoder_gearth (int port);    // private constructor
 
-	std::vector<char>  d_data;
-	unsigned int d_offset;
+  std::vector<char>  d_data;
+  unsigned int d_offset;
 
-	enum state_t { ST_SKURR, ST_PREAMBLE, ST_STARTSIGN, ST_DATA, ST_STOPSIGN};
-	int d_nskurr, d_npreamble, d_nstartsign, d_ndata,  d_nstopsign;
+  enum state_t { ST_SKURR, ST_PREAMBLE, ST_STARTSIGN, ST_DATA, ST_STOPSIGN};
+  int d_nskurr, d_npreamble, d_nstartsign, d_ndata,  d_nstopsign;
 
-	state_t d_state;
-	unsigned char d_crc[16];
-	int d_antallenner;
-	unsigned char d_buffer[450];
-	unsigned char d_rbuffer[450];
-	char *d_tbuffer;
-	int d_bufferpos;
-	char d_last;
-	int d_antallpreamble;
-	bool d_bitstuff;
-	int d_receivedframes;
-	int d_lostframes;
-	int d_lostframes2;
-	gr_msg_queue_sptr d_msgq;
-	FILE *d_outfile;
-	std::string d_sendut;
-	std::vector<Ship> d_ships;
-	pthread_mutex_t d_mutex;
-	pthread_mutex_t d_mutex2;
-	int d_port;
-	void bokstavtabell(unsigned char, unsigned char *, int);
+  state_t d_state;
+  unsigned char d_crc[16];
+  int d_antallenner;
+  unsigned char d_buffer[450];
+  unsigned char d_rbuffer[450];
+  char *d_tbuffer;
+  int d_bufferpos;
+  char d_last;
+  int d_antallpreamble;
+  bool d_bitstuff;
+  int d_receivedframes;
+  int d_lostframes;
+  int d_lostframes2;
+  gr_msg_queue_sptr d_msgq;
+  FILE *d_outfile;
+  std::string d_sendut;
+  std::vector<Ship> d_ships;
+  pthread_mutex_t d_mutex;
+  pthread_mutex_t d_mutex2;
+  int d_port;
+  void bokstavtabell(unsigned char, unsigned char *, int);
 
 
-	unsigned short sdlc_crc(unsigned char*, unsigned len);
-	bool calculate_crc(int);
-	void restart();
-	void get_data();
-//	void *threaden(void *arg);
-	void update_ship(unsigned long mmsi,double lat,double lon, short heading, short speed);
-	void update_shipdata(unsigned long mmsi, std::string name, std::string destination);
-	unsigned long henten(int from, int size, unsigned char *frame);
- public:
-  ~ais_ais_decoder_gearth ();	// public destructor
+  unsigned short sdlc_crc(unsigned char*, unsigned len);
+  bool calculate_crc(int);
+  void restart();
+  void get_data();
+  //    void *threaden(void *arg);
+  void update_ship(unsigned long mmsi,double lat,double lon, short heading, short speed);
+  void update_shipdata(unsigned long mmsi, std::string name, std::string destination);
+  unsigned long henten(int from, int size, unsigned char *frame);
+public:
+  ~ais_ais_decoder_gearth ();   // public destructor
 
   // Where all the action really happens
-//  void forecast (int, gr_vector_int &);
+  //  void forecast (int, gr_vector_int &);
 
-	int received();
-	int lost();
-	int lost2();
+  int received();
+  int lost();
+  int lost2();
 
-  
+
   int work (int noutput_items,
-	gr_vector_const_void_star &input_items,
-	    gr_vector_void_star &output_items);
+            gr_vector_const_void_star &input_items,
+            gr_vector_void_star &output_items);
 };
 
 #endif /* INCLUDED_ais_ais_decoder_gearth_H */

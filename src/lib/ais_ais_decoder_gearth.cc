@@ -1,19 +1,19 @@
 /* -*- c++ -*- */
 /*
  * Copyright 2004 Free Software Foundation, Inc.
- * 
+ *
  * This file is part of GNU Radio
- * 
+ *
  * GNU Radio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2, or (at your option)
  * any later version.
- * 
+ *
  * GNU Radio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with GNU Radio; see the file COPYING.  If not, write to
  * the Free Software Foundation, Inc., 51 Franklin Street,
@@ -41,74 +41,74 @@
  */
 
 
-ais_ais_decoder_gearth_sptr 
-ais_make_ais_decoder_gearth (int port)			// This is needed for python to access this class
+ais_ais_decoder_gearth_sptr
+ais_make_ais_decoder_gearth (int port)                  // This is needed for python to access this class
 {
   return ais_ais_decoder_gearth_sptr (new ais_ais_decoder_gearth (port));
 }
 
 void * threaden(void *arg)       // A thread for updating the kml file that is sent to Google Earth
 {
-	ais_ais_decoder_gearth *klasse = (ais_ais_decoder_gearth*)arg;  // pointer to the class since this is not a member function
-	while(1){
-	DBG(std::cout << klasse->d_receivedframes << std::endl;)
-	pthread_mutex_lock(&klasse->d_mutex);		
-	klasse->d_sendut.clear();			
-	klasse->d_sendut.append(headerkml);		// Add header to kml-file
-	pthread_mutex_lock(&klasse->d_mutex2);
-	for(unsigned int i=0;i<klasse->d_ships.size();i++)
-	{
-		klasse->d_ships[i].check_time();
-		klasse->d_sendut.append(klasse->d_ships[i].get_kml());	// Add every station
-	}
-	pthread_mutex_unlock(&klasse->d_mutex2);         
-	klasse->d_sendut.append(bottomkml);             // Add bottom to kml
-	pthread_mutex_unlock(&klasse->d_mutex);
-	sleep(5);
-	 }
+  ais_ais_decoder_gearth *klasse = (ais_ais_decoder_gearth*)arg;  // pointer to the class since this is not a member function
+  while(1){
+    DBG(std::cout << klasse->d_receivedframes << std::endl;)
+      pthread_mutex_lock(&klasse->d_mutex);
+    klasse->d_sendut.clear();
+    klasse->d_sendut.append(headerkml);         // Add header to kml-file
+    pthread_mutex_lock(&klasse->d_mutex2);
+    for(unsigned int i=0;i<klasse->d_ships.size();i++)
+      {
+        klasse->d_ships[i].check_time();
+        klasse->d_sendut.append(klasse->d_ships[i].get_kml());  // Add every station
+      }
+    pthread_mutex_unlock(&klasse->d_mutex2);
+    klasse->d_sendut.append(bottomkml);             // Add bottom to kml
+    pthread_mutex_unlock(&klasse->d_mutex);
+    sleep(5);
+  }
 }
 
 
 void * serveren (void *arg)     // A simple server which sends the kml file to google earth
 {
-	ais_ais_decoder_gearth *klasse = (ais_ais_decoder_gearth*)arg;
+  ais_ais_decoder_gearth *klasse = (ais_ais_decoder_gearth*)arg;
 
-	int sockfd,clilen,klientsock;
-	struct sockaddr_in serv_addr, cli_addr;
+  int sockfd,clilen,klientsock;
+  struct sockaddr_in serv_addr, cli_addr;
 
-	sockfd = socket(AF_INET, SOCK_STREAM,0);
-	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_addr.s_addr = INADDR_ANY;
-	serv_addr.sin_port = htons(klasse->d_port);
-	if (bind(sockfd,(struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
-	{
-		serv_addr.sin_port = htons(klasse->d_port+1);
-		if(bind(sockfd,(struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
-			throw std::runtime_error("Unable to bind socket\n");
-	}
-	listen(sockfd, 5);
-	clilen = sizeof(cli_addr);
-	while(1){
-		klientsock = accept(sockfd,(struct sockaddr*) &cli_addr, (socklen_t *)&clilen);
-		if (klientsock < 0)
-		{
-			throw std::runtime_error("Error on socket accept\n");
-		}
-		char *buffer = (char *)malloc(1000*sizeof(char));
-		if (buffer == NULL)
-		{
-			throw std::runtime_error("Error allocating memory\n");
-		}
-		read(klientsock,buffer,1000);
-		free(buffer);
-		pthread_mutex_lock(&klasse->d_mutex);
-		write(klientsock,klasse->d_sendut.c_str(),klasse->d_sendut.size());
-		pthread_mutex_unlock(&klasse->d_mutex);
-		shutdown(klientsock,2);
-		close(klientsock);
-		DBG(std::cout << "En har fått\n";)
+  sockfd = socket(AF_INET, SOCK_STREAM,0);
+  serv_addr.sin_family = AF_INET;
+  serv_addr.sin_addr.s_addr = INADDR_ANY;
+  serv_addr.sin_port = htons(klasse->d_port);
+  if (bind(sockfd,(struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
+    {
+      serv_addr.sin_port = htons(klasse->d_port+1);
+      if(bind(sockfd,(struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
+        throw std::runtime_error("Unable to bind socket\n");
+    }
+  listen(sockfd, 5);
+  clilen = sizeof(cli_addr);
+  while(1){
+    klientsock = accept(sockfd,(struct sockaddr*) &cli_addr, (socklen_t *)&clilen);
+    if (klientsock < 0)
+      {
+        throw std::runtime_error("Error on socket accept\n");
+      }
+    char *buffer = (char *)malloc(1000*sizeof(char));
+    if (buffer == NULL)
+      {
+        throw std::runtime_error("Error allocating memory\n");
+      }
+    read(klientsock,buffer,1000);
+    free(buffer);
+    pthread_mutex_lock(&klasse->d_mutex);
+    write(klientsock,klasse->d_sendut.c_str(),klasse->d_sendut.size());
+    pthread_mutex_unlock(&klasse->d_mutex);
+    shutdown(klientsock,2);
+    close(klientsock);
+    DBG(std::cout << "En har fått\n";)
 
-	}
+      }
 
 }
 
@@ -117,263 +117,263 @@ void * serveren (void *arg)     // A simple server which sends the kml file to g
  */
 ais_ais_decoder_gearth::ais_ais_decoder_gearth (int port)
   : gr_sync_block ("ais_decoder_gearth",
-		   gr_make_io_signature (1,1, sizeof(char)),	// Number of minimum input ports, maximum output ports and size of each element (char = 1byte)
-		   gr_make_io_signature (0,0,0)),
-d_port(port)
-		 		// Initializing class members   d_x for horizontal position and d_y for vertical position
+                   gr_make_io_signature (1,1, sizeof(char)),    // Number of minimum input ports, maximum output ports and size of each element (char = 1byte)
+                   gr_make_io_signature (0,0,0)),
+    d_port(port)
+    // Initializing class members   d_x for horizontal position and d_y for vertical position
 {
-//	set_output_multiple(8);
-	d_receivedframes = 0;
-	d_lostframes = 0;
-	d_lostframes2 = 0;
-	d_outfile = fopen("/tmp/aisdata.dat","a");
-	fprintf(d_outfile,"New------------------------->\n");
-	pthread_t thread1, thread2;
+  //    set_output_multiple(8);
+  d_receivedframes = 0;
+  d_lostframes = 0;
+  d_lostframes2 = 0;
+  d_outfile = fopen("/tmp/aisdata.dat","a");
+  fprintf(d_outfile,"New------------------------->\n");
+  pthread_t thread1, thread2;
 
-	fclose(d_outfile);
-	restart();
-	pthread_mutex_unlock(&d_mutex);
-	pthread_mutex_unlock(&d_mutex2);
-	pthread_create(&thread1,0,threaden,this);
-	pthread_create(&thread2,0,serveren,this);
+  fclose(d_outfile);
+  restart();
+  pthread_mutex_unlock(&d_mutex);
+  pthread_mutex_unlock(&d_mutex2);
+  pthread_create(&thread1,0,threaden,this);
+  pthread_create(&thread2,0,serveren,this);
 }
 
 
 unsigned short ais_ais_decoder_gearth::sdlc_crc(unsigned char *data, unsigned len) // Calculates CRC-checksum
 {
-	unsigned short c, crc=0xffff;
+  unsigned short c, crc=0xffff;
 
-	while(len--)
-		for(c = 0x100 + *data++; c> 1 ; c >>=1)
-			if((crc ^ c) & 1)
-				crc=(crc>>1)^0x8408;
-			else
-				crc>>=1;
-	return ~crc;
+  while(len--)
+    for(c = 0x100 + *data++; c> 1 ; c >>=1)
+      if((crc ^ c) & 1)
+        crc=(crc>>1)^0x8408;
+      else
+        crc>>=1;
+  return ~crc;
 
 }
 
-bool ais_ais_decoder_gearth::calculate_crc(int lengde)          
+bool ais_ais_decoder_gearth::calculate_crc(int lengde)
 {
-	int antallbytes = lengde / 8;
-	unsigned char *data = (unsigned char*) malloc(sizeof(unsigned char)*(antallbytes+2));
-		if (data == NULL)
-		{
-			throw std::runtime_error("Error allocating memory\n");
-		}
-	int i,j;
+  int antallbytes = lengde / 8;
+  unsigned char *data = (unsigned char*) malloc(sizeof(unsigned char)*(antallbytes+2));
+  if (data == NULL)
+    {
+      throw std::runtime_error("Error allocating memory\n");
+    }
+  int i,j;
 
-	unsigned char tmp;
+  unsigned char tmp;
 
-	for(j=0;j<antallbytes + 2;j++)
-	{
-		tmp = 0;
-		for(i=0;i<8;i++)
-			tmp |= (((d_buffer[i+8*j]) << (i)));
-		data[j] = tmp;
-	}
-	unsigned short crc = sdlc_crc(data,antallbytes+2);
-	DBG(printf("CRC: %04x\n",crc);)
-	memset(d_rbuffer,0,250*sizeof(char));
-	for(j=0;j<antallbytes;j++)
-	{
-		for(i=0;i<8;i++)
-			d_rbuffer[j*8+i] = (data[j] >> (7-i)) &1;
-	}
-	free(data);
-/*
-	for(i=0;i<16;i++)
-	{	
-		d_crc[i] = (crc >> i) & 1; 
-		//printf("%d",d_crc[i]);
-	}
-*/	
-	//printf("\n");
-	return (crc == 0x0f47);
+  for(j=0;j<antallbytes + 2;j++)
+    {
+      tmp = 0;
+      for(i=0;i<8;i++)
+        tmp |= (((d_buffer[i+8*j]) << (i)));
+      data[j] = tmp;
+    }
+  unsigned short crc = sdlc_crc(data,antallbytes+2);
+  DBG(printf("CRC: %04x\n",crc);)
+    memset(d_rbuffer,0,250*sizeof(char));
+  for(j=0;j<antallbytes;j++)
+    {
+      for(i=0;i<8;i++)
+        d_rbuffer[j*8+i] = (data[j] >> (7-i)) &1;
+    }
+  free(data);
+  /*
+    for(i=0;i<16;i++)
+    {
+    d_crc[i] = (crc >> i) & 1;
+    //printf("%d",d_crc[i]);
+    }
+  */
+  //printf("\n");
+  return (crc == 0x0f47);
 }
 
 unsigned long ais_ais_decoder_gearth::henten(int from, int size, unsigned char *frame)
 {
-	int i=0;
-	unsigned long tmp = 0;
-	for(i=0;i<size;i++)
-	{
-		tmp |= (frame[from+i]) << (size-1-i);
-	}
-	return tmp;
+  int i=0;
+  unsigned long tmp = 0;
+  for(i=0;i<size;i++)
+    {
+      tmp |= (frame[from+i]) << (size-1-i);
+    }
+  return tmp;
 
 }
 
 
 void ais_ais_decoder_gearth::bokstavtabell(unsigned char bokstav, unsigned char* name, int pos)
 {
-	name[pos] = bokstav + 64;
-	if (name[pos] == 64 || name[pos] == 96) name[pos] = ' ';
+  name[pos] = bokstav + 64;
+  if (name[pos] == 64 || name[pos] == 96) name[pos] = ' ';
 
 }
 
-void ais_ais_decoder_gearth::get_data ()    // Picks out interesting data from the bits 
+void ais_ais_decoder_gearth::get_data ()    // Picks out interesting data from the bits
 {
-	printf("__________\n");
-	unsigned char type = henten(0,6,d_rbuffer);
-	printf("MessageID: %d\n",type);
-	unsigned long mmsi = henten(8,30,d_rbuffer);
-	printf("MMSI: %09d\n",(int)mmsi);
-	unsigned long day,hour, minute, second,year,month;
-	int longitude, latitude;
-	unsigned short heading, sog, heading2;
-	char rateofturn, underway;
-	float longit, latit;
-	int k, hvor, letter;
-switch(type){
-    case 1:
-    case 2:
-    case 3:
-	    longitude = henten(61,28,d_rbuffer);
-		if(((longitude >> 27)&1)==1)
-		longitude |= 0xF0000000;
-	    printf("Longitude: %f\n",(float)longitude/600000);
-	    latitude = henten(38+22+29,27,d_rbuffer);
-	    if(((latitude >> 26)&1)==1)
-		    latitude |= 0xf8000000;
-	    printf("Latitude: %f\n",(float)latitude/600000);
-	    heading = henten(38+22+28+28,12,d_rbuffer);
-	    printf("Heading: %f\n",(float)heading/10);
-	    sog = henten(50,10,d_rbuffer);
-	    printf("Knots: %f\n",(float)sog/10);
-	    rateofturn = henten(38+2,8,d_rbuffer);
-	    printf("Rateofturn: %i\n",rateofturn);
-	    underway = henten(38,2,d_rbuffer);
-	    printf("Underway: %d\n",underway);
-	    heading2 = henten(38+22+28+28+12,9,d_rbuffer);
-	    printf("Heading2: %d\n",heading2);
-	    update_ship(mmsi,((float)latitude)/10000/60,((float)longitude)/10000/60,heading,sog);
-       break;
+  printf("__________\n");
+  unsigned char type = henten(0,6,d_rbuffer);
+  printf("MessageID: %d\n",type);
+  unsigned long mmsi = henten(8,30,d_rbuffer);
+  printf("MMSI: %09d\n",(int)mmsi);
+  unsigned long day,hour, minute, second,year,month;
+  int longitude, latitude;
+  unsigned short heading, sog, heading2;
+  char rateofturn, underway;
+  float longit, latit;
+  int k, hvor, letter;
+  switch(type){
+  case 1:
+  case 2:
+  case 3:
+    longitude = henten(61,28,d_rbuffer);
+    if(((longitude >> 27)&1)==1)
+      longitude |= 0xF0000000;
+    printf("Longitude: %f\n",(float)longitude/600000);
+    latitude = henten(38+22+29,27,d_rbuffer);
+    if(((latitude >> 26)&1)==1)
+      latitude |= 0xf8000000;
+    printf("Latitude: %f\n",(float)latitude/600000);
+    heading = henten(38+22+28+28,12,d_rbuffer);
+    printf("Heading: %f\n",(float)heading/10);
+    sog = henten(50,10,d_rbuffer);
+    printf("Knots: %f\n",(float)sog/10);
+    rateofturn = henten(38+2,8,d_rbuffer);
+    printf("Rateofturn: %i\n",rateofturn);
+    underway = henten(38,2,d_rbuffer);
+    printf("Underway: %d\n",underway);
+    heading2 = henten(38+22+28+28+12,9,d_rbuffer);
+    printf("Heading2: %d\n",heading2);
+    update_ship(mmsi,((float)latitude)/10000/60,((float)longitude)/10000/60,heading,sog);
+    break;
 
-    case 4:
-	    year = henten(40,12,d_rbuffer);
-	    printf("Year: %d\n",(int)year);
-	    month = henten(52,4,d_rbuffer);
-	    printf("Month: %d\n",(int)month);
-	    day = henten(56,5,d_rbuffer);
-	    printf("Day: %d\n",(int)day);
-	    hour = henten(61,5,d_rbuffer);
-	    printf("Hour: %d\n",(int)hour);
-	    minute = henten(66,6,d_rbuffer);
-	    printf("Minute: %d\n",(int)minute);
-	    second = henten(72,6,d_rbuffer);
-	    printf("Second: %d\n",(int)second);
-	    longitude = henten(79,28,d_rbuffer);
-		if(((longitude >> 27)&1)==1)
-		longitude |= 0xF0000000;
-	    longit = ((float)longitude)/10000/60;
-	    printf("Longitude: %f\n",longit);
-	    latitude = henten(107,27,d_rbuffer);
-	    if(((latitude >> 26)&1)==1)
-		    latitude |= 0xf8000000;
-	    latit = ((float)latitude)/10000/60;
-	    printf("Latitude: %f\n",latit);
-	    update_ship(mmsi,latit,longit,0,0);      // Updates database of ships
-    	break;
-    case 5:
-	unsigned char name[21];
-	unsigned char destination[21];
-	hvor = 112;
-	for(k=0;k<20;k++)
-	{
-		letter = henten(hvor,6,d_rbuffer);
-		bokstavtabell(letter,name,k);
-		hvor += 6;
-	}
-	name[20] = 0;
-	printf("Name: %s\n", name);
-	hvor = 120+106+68+8;
-	for(k=0;k<20;k++)
-	{
-		letter = henten(hvor,6,d_rbuffer);
-		bokstavtabell(letter,destination,k);
-		hvor += 6;
-	}
-	destination[20] = 0;
-	printf("Destination: %s\n",destination);
-	std::ostringstream ol;
-	std::ostringstream ol2;
-	ol << name;
-	ol2 << destination;
-	update_shipdata(mmsi,ol.str(),ol2.str());
-
-
+  case 4:
+    year = henten(40,12,d_rbuffer);
+    printf("Year: %d\n",(int)year);
+    month = henten(52,4,d_rbuffer);
+    printf("Month: %d\n",(int)month);
+    day = henten(56,5,d_rbuffer);
+    printf("Day: %d\n",(int)day);
+    hour = henten(61,5,d_rbuffer);
+    printf("Hour: %d\n",(int)hour);
+    minute = henten(66,6,d_rbuffer);
+    printf("Minute: %d\n",(int)minute);
+    second = henten(72,6,d_rbuffer);
+    printf("Second: %d\n",(int)second);
+    longitude = henten(79,28,d_rbuffer);
+    if(((longitude >> 27)&1)==1)
+      longitude |= 0xF0000000;
+    longit = ((float)longitude)/10000/60;
+    printf("Longitude: %f\n",longit);
+    latitude = henten(107,27,d_rbuffer);
+    if(((latitude >> 26)&1)==1)
+      latitude |= 0xf8000000;
+    latit = ((float)latitude)/10000/60;
+    printf("Latitude: %f\n",latit);
+    update_ship(mmsi,latit,longit,0,0);      // Updates database of ships
+    break;
+  case 5:
+    unsigned char name[21];
+    unsigned char destination[21];
+    hvor = 112;
+    for(k=0;k<20;k++)
+      {
+        letter = henten(hvor,6,d_rbuffer);
+        bokstavtabell(letter,name,k);
+        hvor += 6;
+      }
+    name[20] = 0;
+    printf("Name: %s\n", name);
+    hvor = 120+106+68+8;
+    for(k=0;k<20;k++)
+      {
+        letter = henten(hvor,6,d_rbuffer);
+        bokstavtabell(letter,destination,k);
+        hvor += 6;
+      }
+    destination[20] = 0;
+    printf("Destination: %s\n",destination);
+    std::ostringstream ol;
+    std::ostringstream ol2;
+    ol << name;
+    ol2 << destination;
+    update_shipdata(mmsi,ol.str(),ol2.str());
 
 
-	break;
 
-}
+
+    break;
+
+  }
 }
 
 void ais_ais_decoder_gearth::update_shipdata(unsigned long mmsi, std::string name, std::string destination)
 {
-	bool found = false;
-	pthread_mutex_lock(&d_mutex2);
-	for(unsigned int i=0;i<d_ships.size();i++)
-	{
-		if(d_ships[i].get_mmsi() == mmsi)
-		{
-			d_ships[i].update_data(name, destination);
+  bool found = false;
+  pthread_mutex_lock(&d_mutex2);
+  for(unsigned int i=0;i<d_ships.size();i++)
+    {
+      if(d_ships[i].get_mmsi() == mmsi)
+        {
+          d_ships[i].update_data(name, destination);
 
-			found = true;
-			break;
-		}
-	
-	}
+          found = true;
+          break;
+        }
 
-	pthread_mutex_unlock(&d_mutex2);
+    }
+
+  pthread_mutex_unlock(&d_mutex2);
 }
 
 void ais_ais_decoder_gearth::update_ship(unsigned long mmsi, double latitude, double longitude, short heading, short speed)
 {
-	std::ostringstream tmp;
-	bool found = false;
-	pthread_mutex_lock(&d_mutex2);
-	for(unsigned int i=0;i<d_ships.size();i++)     // If the station is already in database
-	{
-		if (d_ships[i].get_mmsi() == mmsi)
-		{	
-			tmp << mmsi;
-			if (!d_ships[i].has_name())
-				d_ships[i].set_name(tmp.str());
-			d_ships[i].update_pos(latitude,longitude,heading,speed);
-			found = true;
-			DBG(std::cout << "Oppdaterer";)
-			break;
-		}
-	}
-	if (!found)         // If not in database - add.
-		{
-			Ship nytt;
-			tmp << mmsi;
-			nytt.set_name(tmp.str());
-			nytt.set_mmsi(mmsi);
-			nytt.update_pos(latitude,longitude,heading,speed);
-			d_ships.push_back(nytt);
-		}
-	pthread_mutex_unlock(&d_mutex2);
+  std::ostringstream tmp;
+  bool found = false;
+  pthread_mutex_lock(&d_mutex2);
+  for(unsigned int i=0;i<d_ships.size();i++)     // If the station is already in database
+    {
+      if (d_ships[i].get_mmsi() == mmsi)
+        {
+          tmp << mmsi;
+          if (!d_ships[i].has_name())
+            d_ships[i].set_name(tmp.str());
+          d_ships[i].update_pos(latitude,longitude,heading,speed);
+          found = true;
+          DBG(std::cout << "Oppdaterer";)
+            break;
+        }
+    }
+  if (!found)         // If not in database - add.
+    {
+      Ship nytt;
+      tmp << mmsi;
+      nytt.set_name(tmp.str());
+      nytt.set_mmsi(mmsi);
+      nytt.update_pos(latitude,longitude,heading,speed);
+      d_ships.push_back(nytt);
+    }
+  pthread_mutex_unlock(&d_mutex2);
 
 
 }
 
 int ais_ais_decoder_gearth::received ()  // Returns number of successfully received frames
 {
-	return d_receivedframes;
+  return d_receivedframes;
 }
 
 int ais_ais_decoder_gearth::lost()     // Returns number of frames with wrong checksum
 {
-	return d_lostframes;
+  return d_lostframes;
 }
 
 int ais_ais_decoder_gearth::lost2()   // Returns number of frames with wrong start symbol or stop symbol
 {
-	return d_lostframes2;
+  return d_lostframes2;
 }
 void ais_ais_decoder_gearth::restart ()      // Called every time a frame has been finished received
 {
@@ -389,207 +389,207 @@ void ais_ais_decoder_gearth::restart ()      // Called every time a frame has be
   d_last = 0;
   d_bitstuff = false;
   d_bufferpos = 0;
-	DBG(printf("Resets\n");)
-}
+  DBG(printf("Resets\n");)
+    }
 
 ais_ais_decoder_gearth::~ais_ais_decoder_gearth ()
 {
 }
 
-int 
+int
 ais_ais_decoder_gearth::work (int noutput_items,
-			gr_vector_const_void_star &input_items,
-			gr_vector_void_star &output_items)
+                              gr_vector_const_void_star &input_items,
+                              gr_vector_void_star &output_items)
 {
   const char *in = (char *) input_items[0];
-	//enum state_t { ST_SKURR, ST_PREAMBLE, ST_STARTSIGN, ST_DATA, ST_STOPSIGN};
-	//int d_nskurr, d_npreamble, d_nstartsign, d_ndata,  d_nstopsign;
+  //enum state_t { ST_SKURR, ST_PREAMBLE, ST_STARTSIGN, ST_DATA, ST_STOPSIGN};
+  //int d_nskurr, d_npreamble, d_nstartsign, d_ndata,  d_nstopsign;
   int i = 0;
 
   while (i < noutput_items){
-  switch(d_state)
-  {
-	case ST_DATA:
-			if (d_bitstuff)
-			{
-				if(in[i] == 1)
-				{	
-					d_state = ST_STOPSIGN;
-					d_ndata = 0;
-					DBG(printf("%d",in[i]);)
-					d_bitstuff = false;
-					
-				}
-				else
-				{
-					d_ndata++;
-					d_last = in[i];
-					d_bitstuff = false;
-				}	
-			}
-			else  {
-				if(in[i] == d_last && in[i] == 1)
-				{	d_antallenner++;
-					if(d_antallenner == 4)
-					{	d_bitstuff = true;	
-						d_antallenner = 0;
-					}
+    switch(d_state)
+      {
+      case ST_DATA:
+        if (d_bitstuff)
+          {
+            if(in[i] == 1)
+              {
+                d_state = ST_STOPSIGN;
+                d_ndata = 0;
+                DBG(printf("%d",in[i]);)
+                  d_bitstuff = false;
 
-				}
-				else
-					d_antallenner = 0;
-				
-				DBG(printf("%d",in[i]);)
-				d_buffer[d_bufferpos] = in[i]; 
-				d_bufferpos++;
-				d_ndata++;
-				if (d_bufferpos >= 449) {
-					restart();
-				}
-			}
-		break;
-	
-	case ST_SKURR:                // The state when no reasonable input is coming
-			if (in[i] != d_last)
-				d_antallpreamble++;
-			else
-				d_antallpreamble = 0;
-			d_last = in[i];
-			if (d_antallpreamble > 14 && in[i] == 0)
-			{
-				d_state = ST_PREAMBLE;
-			        d_nskurr = 0;	
-				d_antallpreamble = 0;
-				DBG(printf("Preamble\n");)
-			}
-			d_nskurr++;
-		break;
+              }
+            else
+              {
+                d_ndata++;
+                d_last = in[i];
+                d_bitstuff = false;
+              }
+          }
+        else  {
+          if(in[i] == d_last && in[i] == 1)
+            {   d_antallenner++;
+              if(d_antallenner == 4)
+                {       d_bitstuff = true;
+                  d_antallenner = 0;
+                }
 
-	case ST_PREAMBLE:             // Switches to this state when preamble has been discovered
-			DBG(printf("..%d..",in[i]);)
-			if (in[i] != d_last && d_nstartsign == 0)
-				d_antallpreamble++;
-			else
-			{
-				if(in[i] == 1)    //To ettal har kommet etter hverandre 
-				{
-					if(d_nstartsign == 0){    // Forste gang det skjer
-						d_nstartsign = 3;
-						d_last = in[i];
-					}
-					else if (d_nstartsign == 5)   // Har oppdaget start av startsymbol
-					{
-						d_nstartsign++;
-						d_npreamble = 0;
-						d_antallpreamble = 0;
-						d_state = ST_STARTSIGN;
-					}
-					else{
-						d_nstartsign++;
-					}
-						
-				}
-				else   //To nuller har kommet etter hverandre
-				{
-					if(d_nstartsign == 0)
-					{	d_nstartsign =1;
-						
-					}	
-					else
-					{
-						restart();
-					}
-				}
-			}
-			d_npreamble++;
-		break;
-	
-	case ST_STARTSIGN:                 
-			//printf("..%d..",in[i]);
-			//printf("Startsign: %d\n",d_nstartsign);
-			if(d_nstartsign >=7)
-			{
-				if (in[i] == 0)
-				{
-					DBG(printf("\nData:\n");)
-					d_state = ST_DATA;
-					d_nstartsign = 0;
-					d_antallenner = 0;
-					memset(d_buffer,0,250*sizeof(char));
-					d_bufferpos = 0;
-				}
-				else {
-					restart();
-				}
-				
-			}
-			else if (in[i] == 0)
-			{
-				restart();
-			}
-			d_nstartsign++;
-		break;
-	
-	case ST_STOPSIGN:
-		int bufferlengde = d_bufferpos - 6 -16;
-		if(in[i] == 0)
-		{
-			DBG(printf("%d\n\nFrame received OK.  %d bits\n",in[i],bufferlengde);)
-			bool correct = calculate_crc(bufferlengde);
-			if(correct)
-			{
-				DBG(printf("CRC Checksum correct! Frame Successfully Received!!!\n");)
-				d_receivedframes++;
-				get_data();
-				d_tbuffer = (char*) malloc((bufferlengde+1)*sizeof(char));
-				if (d_tbuffer == NULL)
-				{
-					throw std::runtime_error("Error allocating memory\n");
-				}
-				printf("\n<--");
-				for(int l=0;l<bufferlengde;l++)
-				{
-					d_tbuffer[l] = d_rbuffer[l] + 0x30;
-					printf("%c",d_tbuffer[l]);
-				}
-				printf("-->\n");
-				d_tbuffer[bufferlengde] = 0;
-				d_outfile = fopen("/tmp/aisdata.dat","a");
-				fprintf(d_outfile,"%s\n",d_tbuffer);
-				fclose(d_outfile);
-				free(d_tbuffer);
-/*				if(!d_msgq->full_p())
-				{
-					d_tbuffer = (char*) malloc((bufferlengde+1)*sizeof(char));
-					for(int i=0;i<bufferlengde;i++)
-					{
-						d_tbuffer[i] = d_rbuffer[i] + 0x30;
-					}
-					d_tbuffer[bufferlengde] = 0;
-					gr_message_sptr msg = gr_make_message_from_string(melding,0,0,0);
-					d_msgq->insert_tail(msg);
-					msg.reset();
-					free(d_tbuffer);
-				}*/
-			}
-			else{
-				DBG(printf("CRC Checksum FALSE!!!\n");)
-				d_lostframes++;
-			}
-			DBG(printf("_________________________________________________________\n\n");)
-			
-		}
-		else{
-			DBG(printf("\n\nERROR in Frame\n__________________________________________________________\n\n");)
-			d_lostframes2++;
-		}
-		restart();
-		break;
+            }
+          else
+            d_antallenner = 0;
+
+          DBG(printf("%d",in[i]);)
+            d_buffer[d_bufferpos] = in[i];
+          d_bufferpos++;
+          d_ndata++;
+          if (d_bufferpos >= 449) {
+            restart();
+          }
+        }
+        break;
+
+      case ST_SKURR:                // The state when no reasonable input is coming
+        if (in[i] != d_last)
+          d_antallpreamble++;
+        else
+          d_antallpreamble = 0;
+        d_last = in[i];
+        if (d_antallpreamble > 14 && in[i] == 0)
+          {
+            d_state = ST_PREAMBLE;
+            d_nskurr = 0;
+            d_antallpreamble = 0;
+            DBG(printf("Preamble\n");)
+              }
+        d_nskurr++;
+        break;
+
+      case ST_PREAMBLE:             // Switches to this state when preamble has been discovered
+        DBG(printf("..%d..",in[i]);)
+          if (in[i] != d_last && d_nstartsign == 0)
+            d_antallpreamble++;
+          else
+            {
+              if(in[i] == 1)    //To ettal har kommet etter hverandre
+                {
+                  if(d_nstartsign == 0){    // Forste gang det skjer
+                    d_nstartsign = 3;
+                    d_last = in[i];
+                  }
+                  else if (d_nstartsign == 5)   // Har oppdaget start av startsymbol
+                    {
+                      d_nstartsign++;
+                      d_npreamble = 0;
+                      d_antallpreamble = 0;
+                      d_state = ST_STARTSIGN;
+                    }
+                  else{
+                    d_nstartsign++;
+                  }
+
+                }
+              else   //To nuller har kommet etter hverandre
+                {
+                  if(d_nstartsign == 0)
+                    {   d_nstartsign =1;
+
+                    }
+                  else
+                    {
+                      restart();
+                    }
+                }
+            }
+        d_npreamble++;
+        break;
+
+      case ST_STARTSIGN:
+        //printf("..%d..",in[i]);
+        //printf("Startsign: %d\n",d_nstartsign);
+        if(d_nstartsign >=7)
+          {
+            if (in[i] == 0)
+              {
+                DBG(printf("\nData:\n");)
+                  d_state = ST_DATA;
+                d_nstartsign = 0;
+                d_antallenner = 0;
+                memset(d_buffer,0,250*sizeof(char));
+                d_bufferpos = 0;
+              }
+            else {
+              restart();
+            }
+
+          }
+        else if (in[i] == 0)
+          {
+            restart();
+          }
+        d_nstartsign++;
+        break;
+
+      case ST_STOPSIGN:
+        int bufferlengde = d_bufferpos - 6 -16;
+        if(in[i] == 0)
+          {
+            DBG(printf("%d\n\nFrame received OK.  %d bits\n",in[i],bufferlengde);)
+              bool correct = calculate_crc(bufferlengde);
+            if(correct)
+              {
+                DBG(printf("CRC Checksum correct! Frame Successfully Received!!!\n");)
+                  d_receivedframes++;
+                get_data();
+                d_tbuffer = (char*) malloc((bufferlengde+1)*sizeof(char));
+                if (d_tbuffer == NULL)
+                  {
+                    throw std::runtime_error("Error allocating memory\n");
+                  }
+                printf("\n<--");
+                for(int l=0;l<bufferlengde;l++)
+                  {
+                    d_tbuffer[l] = d_rbuffer[l] + 0x30;
+                    printf("%c",d_tbuffer[l]);
+                  }
+                printf("-->\n");
+                d_tbuffer[bufferlengde] = 0;
+                d_outfile = fopen("/tmp/aisdata.dat","a");
+                fprintf(d_outfile,"%s\n",d_tbuffer);
+                fclose(d_outfile);
+                free(d_tbuffer);
+                /*                              if(!d_msgq->full_p())
+                                                {
+                                                d_tbuffer = (char*) malloc((bufferlengde+1)*sizeof(char));
+                                                for(int i=0;i<bufferlengde;i++)
+                                                {
+                                                d_tbuffer[i] = d_rbuffer[i] + 0x30;
+                                                }
+                                                d_tbuffer[bufferlengde] = 0;
+                                                gr_message_sptr msg = gr_make_message_from_string(melding,0,0,0);
+                                                d_msgq->insert_tail(msg);
+                                                msg.reset();
+                                                free(d_tbuffer);
+                                                }*/
+              }
+            else{
+              DBG(printf("CRC Checksum FALSE!!!\n");)
+                d_lostframes++;
+            }
+            DBG(printf("_________________________________________________________\n\n");)
+
+              }
+        else{
+          DBG(printf("\n\nERROR in Frame\n__________________________________________________________\n\n");)
+            d_lostframes2++;
+        }
+        restart();
+        break;
 
 
-  }
-			d_last = in[i];
-  			i++;
+      }
+    d_last = in[i];
+    i++;
   }
 
 
