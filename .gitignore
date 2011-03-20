@@ -1,0 +1,9 @@
+Makefile.in
+aclocal.m4
+config.guess
+config.h.in
+config.sub
+autom4te.cache
+configure
+ltmain.sh
+*loT
